@@ -1,0 +1,39 @@
+# Core backend framework
+fastapi==0.111.0
+uvicorn==0.30.1
+
+
+# Agent framework
+langchain
+langchain-ollama
+langchain-huggingface
+langgraph
+
+# Retrieval-Augmented Generation (RAG)
+faiss-cpu
+chromadb
+
+# Multimodal handling (OCR, PDF, vision)
+# pytesseract==0.3.10
+# pdfplumber==0.11.0
+# PyMuPDF==1.24.4
+# torchvision==0.18.1
+
+# # File & deliverable generation
+python-docx==1.1.2
+docxtpl
+python-pptx==0.6.23
+openpyxl==3.1.5
+pandas==2.2.2
+
+jupyterlab 
+notebook
+
+# # Sandbox & monitoring
+# # docker==7.1.0
+# psutil==6.0.0
+
+
+
+# Utilities
+requests==2.32.3
