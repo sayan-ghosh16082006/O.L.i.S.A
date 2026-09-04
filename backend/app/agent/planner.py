@@ -34,7 +34,7 @@ manager = ModelManager(provider)
 
 
 tools = [
-    generate_word_doc_tool, create_pptx_tool, search_files, read_file, write_file, append_file, copy_file, move_file, append_file,rename_file,
+    generate_word_doc_tool, create_pptx_tool, search_files, read_file, write_file, append_file, copy_file, move_file, delete_file, rename_file,
     create_directory, delete_directory_by_name
     ]
 

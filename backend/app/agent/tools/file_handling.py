@@ -3,8 +3,7 @@ import shutil
 import time
 from langchain.tools import tool
 
-# Explicit, single source of truth for where write_file's default output goes.
-# Override by passing `dirname` (still resolved relative to this root).
+
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent.parent.parent / "project_workspace"
 
 
@@ -156,26 +155,29 @@ async def append_file(working_directory: str, filename: str, content: str) -> st
         return f"Couldn't update file {filename}: {e}"
 
 
-@tool("delete file")
-async def delete_file(working_directory: str, filename: str) -> str:
-    """Deletes a file.
-    args:
-    working_directory : the directory under which the file exists
-    filename : the file to be deleted (relative to working_directory)
+
+@tool("delete files")
+async def delete_file(dirname: str, filename: str, root: str | None = None) -> list[str]:
     """
-    try:
-        file_path = _safe_path(working_directory, filename)
-    except ValueError as e:
-        return f"Error: {e}"
+    Search for directories named dirname under root (or current working directory if root is None),
+    then delete the given file inside them.
+    Returns a list of deleted file paths.
+    """
+    root_path = Path(root).resolve() if root else Path.cwd()
+    deleted = []
 
-    if not file_path.is_file():
-        return f"Error: {filename} does not exist in {working_directory}"
+    # include root itself in the search
+    dirs_to_check = [root_path] + list(root_path.rglob("*"))
 
-    try:
-        file_path.unlink()
-        return f"File {filename} deleted successfully"
-    except Exception as e:
-        return f"Couldn't delete the file {filename}: {e}"
+    for d in dirs_to_check:
+        if d.is_dir() and d.name.lower() == dirname.lower():
+            candidate = d / filename
+            if candidate.exists() and candidate.is_file():
+                candidate.unlink()
+                deleted.append(str(candidate.resolve()))
+
+    return deleted if deleted else [f"No file(s) named '{filename}' found in any '{dirname}' directory under {root_path}"]
+
 
 
 @tool("copy file")
