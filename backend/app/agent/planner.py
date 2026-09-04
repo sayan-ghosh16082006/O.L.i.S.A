@@ -1,17 +1,20 @@
+import asyncio
+from typing import  TypedDict, Annotated, Literal
+from pydantic import BaseModel, Field
+
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage, BaseMessage, SystemMessage, AIMessage
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt.tool_node import ToolNode, tools_condition
-from typing import  TypedDict, Annotated, Literal
+
 from app.agent.tools.generate_docx import generate_word_doc_tool
 from app.agent.tools.generate_ppt import create_pptx_tool
 from app.agent.tools.file_handling import * 
-from pydantic import BaseModel, Field
 from app.model.model_manager import ModelManager
-import asyncio
 
+from app.agent.sovereignty import  guard, sovereignty_tool_logger
 
-
+guard.start_network_monitor()
 
 
 
@@ -36,8 +39,9 @@ manager = ModelManager(provider)
 tools = [
     generate_word_doc_tool, create_pptx_tool, search_files, read_file, write_file, append_file, copy_file, move_file, delete_file, rename_file,
     create_directory, delete_directory_by_name
-    ]
+]
 
+tools = [sovereignty_tool_logger(t) for t in tools]
 
 
 
@@ -77,6 +81,7 @@ async def supervisor_agent(state : SupervisorState):
     - Maintaining reliability, precision, and trustworthiness in classification.  
 
 """
+    guard.log_event("MODEL_SELECTION", "Selecting 'SUPERVISOR-AGENT' for orchestration", model="multimodal")
 
     last_human_message = [m for m in state["messages"] if isinstance(m, HumanMessage)][-1:]
     
@@ -84,7 +89,12 @@ async def supervisor_agent(state : SupervisorState):
 
     llm = manager.get_model("multimodal")
     llm_with_schema = llm.with_structured_output(RouteDecison)
+
+    guard.log_event("AGENT_STEP", "Generating routing decision...")
     decision = await asyncio.to_thread(llm_with_schema.invoke, messages)
+    guard.log_event("ROUTING", f"Decision: {decision.next} | Reason: {decision.reasoning}")
+
+
 
     return {
         "next_agent" : decision.next,
@@ -149,7 +159,7 @@ async def coding_agent(state : SupervisorState):
     - Build reliable, production-ready workflows.  
 
     """
-
+    guard.log_event("MODEL_SELECTION", "Selecting 'CODING-AGENT' for coding", model="coding")
     messages = [SystemMessage(content=system_prompt)] + state["messages"]
 
     try:
@@ -223,6 +233,8 @@ async def general_agent(state : SupervisorState):
 
     """
 
+    guard.log_event("MODEL_SELECTION", "Selecting 'GENERAL-AGENT' for general question answering", model="summarization")
+
     recent_messages = state["messages"][-5:] 
     
     messages = [SystemMessage(content=system_prompt)] + recent_messages
@@ -289,6 +301,8 @@ async def vision_agent(state : SupervisorState):
         
     """
 
+    guard.log_event("MODEL_SELECTION", "Selecting 'VISION-AGENT' for vision related tasks", model="vision")
+
     task = next(
         (m.content for m in state["messages"] if isinstance(m, HumanMessage))
     )
@@ -315,9 +329,9 @@ tool_node = ToolNode(tools)
 
 
 async def route_tools_back_to_agent(state : SupervisorState):
-    messages = state["messages"]
-    if not messages:
-        return "supervisor_agent"
+    # messages = state["messages"]
+    # if not messages:
+    #     return "supervisor_agent"
 
     return state["next_agent"]
 
@@ -350,7 +364,6 @@ def agent_workflow():
     graph.add_conditional_edges("general_agent", tools_condition)
     graph.add_conditional_edges("vision_agent", tools_condition)
 
-    # graph.add_edge("tools", "supervisor_agent")
     graph.add_conditional_edges(
         "tools",
         route_tools_back_to_agent,
@@ -367,26 +380,39 @@ def agent_workflow():
 agent = agent_workflow()
 
 
-# this portion will be removed if when frontend will be implemented
+
+
 async def main():
+    print("\n" + "="*60)
+    print("🤖 OLLAMA INTEGRATED SOVEREIGN AGENT : O.L.i.S.A")
+    print("="*60)
+    
     while True:
-        user = input("Ask Query : ")
+        user = input("\nAsk Query: ")
+        if user.lower() in ["exit", "bye"]: break
 
-        if user.lower() in ["exit", "bye"]:
-            break
+        print("\n--- [INTERNAL TRACE] ---")
+        
+        current_node = None 
 
-        print("AGENT : ", end = " ")
         async for message_chunk, metadata in agent.astream(
-            {
-            "messages" : [HumanMessage(content=user)]
-            },
+            {"messages" : [HumanMessage(content=user)]},
             stream_mode="messages",
-            # config={"recursion_limit": 8}
         ):
-                node = metadata.get("langgraph_node")
-                if node in ("coding_agent", "general_agent", "vision_agent") and message_chunk.content:
+            node = metadata.get("langgraph_node")
+            
+            if node in ("coding_agent", "general_agent", "vision_agent"):
+                
+
+                if node != current_node:
+                    print(f"\n[AGENT RESPONSE ({node})]: ", end="", flush=True)
+                    current_node = node
+                
+
+                if message_chunk.content:
                     print(message_chunk.content, end="", flush=True)
 
-        print("\n")
+        print("\n" + "-"*50)
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
