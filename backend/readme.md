@@ -16,15 +16,16 @@ project_root/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── file_handling.py
 │   │   │   │   └── other_tools.py
-│   │   │   └── planner.py              # the main agentic workflow logic
+│   │   │   ├──  planner.py              # the main agentic workflow logic
+|   |   |   └── sovereignty.py           # agent logging and sovereignty logics
 │   │   └── models/             
 │   │   |    ├── model_manager.py          # model routing logic                     
 │   │   ├── templates/   
 |   |          ├── word_template.docx       # template for word document generation
 │   │
-│   ├── tests/
-│   │   ├── __init__.py
-│   │   └── test_file_handling.py
+│   ├── test.py
+│   ├── test.ipynb   
+│   │   
 │   │
 │   ├── requirements.txt
 │   └── README.md
