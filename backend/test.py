@@ -403,7 +403,7 @@
 
 
 
-# from pathlib import Path
+from pathlib import Path
 # def delete_file(dir, filename, root = None):
 
 #     root_path = Path(root).resolve() if root else Path.cwd()
@@ -419,32 +419,34 @@
 #     return deleted if deleted else "No file(s) found to delete\n"
     
    
-# def delete_file(dirname: str, filename: str, root: str | None = None) -> list[str]:
-#     """
-#     Search for directories named dirname under root (or current working directory if root is None),
-#     then delete the given file inside them.
-#     Returns a list of deleted file paths.
-#     """
-#     root_path = Path(root).resolve() if root else Path.cwd()
-#     deleted = []
+def delete_file( filename: str , dirname: str| None = None, root: str | None = None) -> list[str]:
+    """
+    Search for directories named dirname under root (or current working directory if root is None),
+    then delete the given file inside them.
+    Returns a list of deleted file paths.
+    """
+    root_path = Path(root).resolve() if root else Path.cwd()
+    deleted = []
+    dirname = dirname if dirname else "project_workspace"
+    for d in root_path.rglob("*"):
+        # Match exact directory name
+        if d.is_dir() and d.name.lower() == dirname.lower():
+            candidate = d / filename
+            if candidate.exists() and candidate.is_file():
+                # candidate.unlink()
+                deleted.append(str(candidate.resolve()))
 
-#     for d in root_path.rglob("*"):
-#         # Match exact directory name
-#         if d.is_dir() and d.name.lower() == dirname.lower():
-#             candidate = d / filename
-#             if candidate.exists() and candidate.is_file():
-#                 candidate.unlink()
-#                 deleted.append(str(candidate.resolve()))
-
-#     return deleted if deleted else [f"No file(s) named '{filename}' found in any '{dirname}' directory under {root_path}"]
+    return deleted if deleted else [f"No file(s) named '{filename}' found in any '{dirname}' directory under {root_path}"]
 
 
 
-# print(delete_file("project_workspace","hello.txt"))
+print(delete_file("main.py"))
 # print(find_file("app","__init__.py"))
 
 
-print(" =============")
-print("|| O.L.i.S.A ||")
-print(" =============")
+# print(" =============")
+# print("|| O.L.i.S.A ||")
+# print(" =============")
 
+
+# print(Path().cwd().resolve())

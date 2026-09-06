@@ -157,7 +157,7 @@ async def append_file(working_directory: str, filename: str, content: str) -> st
 
 
 @tool("delete files")
-async def delete_file(dirname: str, filename: str, root: str | None = None) -> list[str]:
+async def delete_file(filename: str , dirname: str| None = None, root: str | None = None) -> list[str]:
     """
     Search for directories named dirname under root (or current working directory if root is None),
     then delete the given file inside them.
@@ -165,8 +165,8 @@ async def delete_file(dirname: str, filename: str, root: str | None = None) -> l
     """
     root_path = Path(root).resolve() if root else Path.cwd()
     deleted = []
+    dirname = dirname if dirname else "project_workspace"
 
-    # include root itself in the search
     dirs_to_check = [root_path] + list(root_path.rglob("*"))
 
     for d in dirs_to_check:
